@@ -1,75 +1,146 @@
-# cli/task.py (Simplified)
+# cli/task.py
+
 import click
+from cli.auth import require_login
 from models.task import Task
-from models.project import Project 
-from cli.utils import login_required # Assumed utility import
+from models.project import Project
+from models.user import User
 
 @click.group(name='task')
 def task_group():
-    """Commands for managing tasks within projects."""
+    """Task management commands."""
     pass
 
-# --- ADD COMMAND ---
-@task_group.command(name='add')
+
+@task_group.command()
 @click.argument('project_id', type=int)
-@click.argument('description')
-@click.option('--assignee', 'assignee_id', type=int, default=None, help='ID of the user to assign the task to.')
-@login_required
-def add_task_command(user, project_id, description, assignee_id):
-    """Add a new task to a specific project."""
-    
+@click.argument('title')
+@click.option('--assign', '-a', type=int, help='User ID to assign task to')
+@require_login
+def create(ctx, project_id, title, assign):
+    """Create a new task in a project."""
+    # Check if project exists
     project = Project.get_by_id(project_id)
     if not project:
-        return click.echo(f"Error: Project ID {project_id} not found.", err=True)
-        
-    try:
-        new_task = Task.create(project_id, description, assignee_id)
-        click.echo(f"Task ID {new_task.id} added to '{project.name}'. Status: {new_task.status}")
-    except Exception as e:
-        click.echo(f"An error occurred creating the task: {e}", err=True)
+        click.echo(f"❌ Project {project_id} not found.", err=True)
+        return
+    
+    # Create the task
+    task = Task.create(project_id, title, assign)
+    if task:
+        click.echo(f"✅ Task created successfully!")
+        click.echo(f"📝 Task ID: {task.id}")
+        click.echo(f"📁 Project: {project.name}")
+        if assign:
+            click.echo(f"👤 Assigned to User ID: {assign}")
+    else:
+        click.echo("❌ Failed to create task.", err=True)
 
-# --- ASSIGN COMMAND ---
-@task_group.command(name='assign')
+
+@task_group.command()
+@click.argument('project_id', type=int)
+@require_login
+def list(ctx, project_id):
+    """List all tasks in a project."""
+    project = Project.get_by_id(project_id)
+    if not project:
+        click.echo(f"❌ Project {project_id} not found.", err=True)
+        return
+    
+    tasks = Task.get_by_project(project_id)
+    if tasks:
+        click.echo(f"📋 Tasks in '{project.name}' ({len(tasks)}):")
+        for t in tasks:
+            status_icon = "✅" if t.status == "completed" else "⏳"
+            assigned = f"→ User {t.assigned_to}" if t.assigned_to else "→ Unassigned"
+            click.echo(f"  {status_icon} [{t.id}] {t.title} {assigned}")
+    else:
+        click.echo(f"ℹ️  No tasks in '{project.name}' yet.")
+
+
+@task_group.command()
+@require_login
+def mytasks(ctx):
+    """List all tasks assigned to you."""
+    user = ctx.obj['user']
+    tasks = Task.get_by_user(user.id)
+    
+    if tasks:
+        click.echo(f"📋 Your tasks ({len(tasks)}):")
+        for t in tasks:
+            status_icon = "✅" if t.status == "completed" else "⏳"
+            project = Project.get_by_id(t.project_id)
+            project_name = project.name if project else "Unknown"
+            click.echo(f"  {status_icon} [{t.id}] {t.title}")
+            click.echo(f"      📁 Project: {project_name} (ID: {t.project_id})")
+    else:
+        click.echo("ℹ️  You have no assigned tasks.")
+
+
+@task_group.command()
+@require_login
+def all(ctx):
+    """List all tasks in the system."""
+    tasks = Task.get_all()
+    
+    if tasks:
+        click.echo(f"📋 All tasks ({len(tasks)}):")
+        for t in tasks:
+            status_icon = "✅" if t.status == "completed" else "⏳"
+            assigned = f"User {t.assigned_to}" if t.assigned_to else "Unassigned"
+            click.echo(f"  {status_icon} [{t.id}] {t.title} (Project: {t.project_id}, {assigned})")
+    else:
+        click.echo("ℹ️  No tasks in the system yet.")
+
+
+@task_group.command()
 @click.argument('task_id', type=int)
 @click.argument('user_id', type=int)
-@login_required
-def assign_task_command(user, task_id, user_id):
-    """Assign a task to a different user."""
-    
-    Task.assign(task_id, user_id)
-    click.echo(f"Task ID {task_id} successfully assigned to User ID {user_id}.")
-
-# --- STATUS COMMAND ---
-@task_group.command(name='status')
-@click.argument('task_id', type=int)
-@click.argument('status', type=click.Choice(['pending', 'in-progress', 'complete', 'blocked']))
-@login_required
-def update_task_status_command(user, task_id, status):
-    """Update the status of a specific task."""
-    
-    Task.update_status(task_id, status)
-    click.echo(f"Task ID {task_id} status updated to '{status}'.")
-
-# --- LIST COMMAND (Simplified) ---
-@task_group.command(name='list')
-@click.option('--project', 'project_id', type=int, help='Filter tasks by Project ID.')
-@login_required
-def list_tasks_command(user, project_id):
-    """List tasks, optionally filtered by project."""
-    
-    if project_id:
-        tasks = Task.get_by_project(project_id)
-        header = f"--- Tasks for Project ID {project_id} ---"
-    else:
-        # Assuming you want to list all tasks assigned to the user by default
-        tasks = Task.get_by_assigned_user(user.id) # Requires Task model update
-        header = f"--- Tasks Assigned to You ({user.username}) ---"
-
-    if not tasks:
-        click.echo("No tasks found matching the criteria.")
+@require_login
+def assign(ctx, task_id, user_id):
+    """Assign a task to a user."""
+    # Check if task exists
+    task = Task.get_by_id(task_id)
+    if not task:
+        click.echo(f"❌ Task {task_id} not found.", err=True)
         return
+    
+    # Check if user exists
+    user = User.get_by_id(user_id)
+    if not user:
+        click.echo(f"❌ User {user_id} not found.", err=True)
+        return
+    
+    if Task.assign(task_id, user_id):
+        click.echo(f"✅ Task {task_id} assigned to {user.username}!")
+    else:
+        click.echo("❌ Failed to assign task.", err=True)
 
-    click.echo(header)
-    for t in tasks:
-        click.echo(f"[{t.id}] {t.description[:40]}... | Status: {t.status}")
-    click.echo("-" * 40)
+
+@task_group.command()
+@click.argument('task_id', type=int)
+@click.argument('status', type=click.Choice(['pending', 'in-progress', 'completed']))
+@require_login
+def status(ctx, task_id, status):
+    """Update task status."""
+    task = Task.get_by_id(task_id)
+    if not task:
+        click.echo(f"❌ Task {task_id} not found.", err=True)
+        return
+    
+    if Task.update_status(task_id, status):
+        click.echo(f"✅ Task {task_id} status updated to '{status}'!")
+    else:
+        click.echo("❌ Failed to update status.", err=True)
+
+
+@task_group.command()
+@click.argument('task_id', type=int)
+@click.confirmation_option(prompt='Are you sure you want to delete this task?')
+@require_login
+def delete(ctx, task_id):
+    """Delete a task."""
+    if Task.delete(task_id):
+        click.echo(f"✅ Task {task_id} deleted successfully!")
+    else:
+        click.echo(f"❌ Task {task_id} not found.", err=True)

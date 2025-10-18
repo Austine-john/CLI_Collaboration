@@ -13,13 +13,34 @@ class Project:
         conn = get_connection()
         cursor = conn.cursor()
 
+        try:
+            cursor.execute(
+                "INSERT INTO projects (name, owner_id) VALUES (?, ?)",
+                (name, owner_id)
+            )
+            conn.commit()
+            project_id = cursor.lastrowid
+            conn.close()
+            return cls(project_id, name, owner_id)
+        except Exception as e:
+            conn.close()
+            return None
+
+    @classmethod
+    def get_by_id(cls, project_id):
+        """Get a specific project by ID."""
+        conn = get_connection()
+        cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO projects (name, owner_id) VALUES (?, ?)",
-            (name, owner_id)
+            "SELECT id, name, owner_id FROM projects WHERE id = ?",
+            (project_id,)
         )
-        conn.commit()
-        print(f"Project '{name}' created successfully!")
+        row = cursor.fetchone()
         conn.close()
+        
+        if row:
+            return cls(*row)
+        return None
 
     @classmethod
     def get_all(cls):
@@ -45,14 +66,25 @@ class Project:
         return projects
 
     @classmethod
-    def delete(cls, project_id):
-        """Delete a project by ID."""
+    def delete(cls, project_id, owner_id):
+        """Delete a project by ID (only if user owns it)."""
         conn = get_connection()
         cursor = conn.cursor()
+        
+        # First check if project exists and user owns it
+        cursor.execute(
+            "SELECT id FROM projects WHERE id = ? AND owner_id = ?",
+            (project_id, owner_id)
+        )
+        if not cursor.fetchone():
+            conn.close()
+            return False
+        
+        # Delete the project
         cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
         conn.commit()
-        print(f"Project with ID {project_id} deleted successfully.")
         conn.close()
+        return True
 
     def __repr__(self):
         return f"<Project {self.name}>"

@@ -1,26 +1,46 @@
-# cli/utils.py (CORRECTED)
+# cli/utils.py
 
 import click
+import os
+# CRITICAL: Import the User model to fetch the user object from the DB
+from models.user import User 
+
+# Path to the file where the user ID is saved
+SESSION_FILE = '.session_user_id'
 
 def login_required(f):
-    
-    # 1. Use @click.pass_context to get the current context (ctx)
+    """
+    Decorator to ensure a user is logged in by checking the in-memory context 
+    or loading the session from the persistent file.
+    """
     @click.pass_context
     def wrapper(ctx, *args, **kwargs):
-        # Retrieve the 'user' object from the top-level Click context (ctx.obj)
         user = ctx.obj.get('user') if ctx.obj and ctx.obj.get('user') else None
         
+        # --- FIX: Load session from file if not in context ---
+        if not user and os.path.exists(SESSION_FILE):
+            try:
+                with open(SESSION_FILE, 'r') as f:
+                    user_id = int(f.read().strip())
+                
+                # Fetch the full User object from the database using the ID
+                user = User.get_by_id(user_id) 
+                
+                # Restore the user to the current in-memory context for this run
+                if user:
+                    ctx.obj['user'] = user
+                
+            except Exception:
+                # If file read or DB fetch fails, treat as logged out
+                user = None 
+
         if not user:
-            click.echo(" Error: You must be logged in to run this command.", err=True)
+            click.echo("❌ Error: You must be logged in to run this command.", err=True)
             ctx.exit()
             
-        # 2. Call the original function (f), passing the user object first, 
-        #    followed by any original arguments (*args, **kwargs).
+        # Call the decorated function, injecting the 'user' object
         return ctx.invoke(f, user, *args, **kwargs)
         
-    # 3. Use the wrapper function as the actual decorated function
-    #    and ensure it carries the metadata of the original function (f).
-    #    This is the standard way to return a decorated function in Python.
     return wrapper
 
 def get_current_user():

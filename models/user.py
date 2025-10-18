@@ -20,9 +20,9 @@ class User:
                 (username, password)
             )
             conn.commit()
-            print(f" User '{username}' registered successfully!")
+            return True
         except sqlite3.IntegrityError:
-            print(f"Username '{username}' already exists.")
+            return False
         finally:
             conn.close()
 
@@ -40,11 +40,25 @@ class User:
         conn.close()
 
         if row:
-            print(f"Welcome back, {username}!")
             return cls(*row)
-        else:
-            print("Invalid username or password.")
-            return None
+        return None
+
+    @classmethod
+    def get_by_id(cls, user_id):
+        """Get user by ID (needed for session loading)."""
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "SELECT id, username, password FROM users WHERE id = ?",
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return cls(*row)
+        return None
 
     @classmethod
     def all(cls):
