@@ -1,5 +1,5 @@
 import sqlite3
-from database import get_connection
+from db import get_connection
 
 class Task:
     def __init__(self, id, project_id, description, assigned_to=None, status="pending"):
