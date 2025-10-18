@@ -1,4 +1,32 @@
-/venv
-
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.cpython-*
 
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Database
+*.db
+collaboration.db
+
+# Session files
+.session_user_id
+
+# Git
+FETCH_HEAD
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
