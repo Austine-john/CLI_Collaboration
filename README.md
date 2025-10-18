@@ -4,18 +4,18 @@ A command-line interface (CLI) application for collaborative project and task ma
 
 ## Features
 
-✨ **User Authentication**
+ **User Authentication**
 - Secure user registration and login
 - Session persistence across commands
 - User profile management
 
-📁 **Project Management**
+ **Project Management**
 - Create and organize projects
 - List all projects or filter by owner
 - View detailed project information
 - Delete projects you own
 
-📝 **Task Management**
+ **Task Management**
 - Create tasks within projects
 - Assign tasks to team members
 - Update task status (pending, in-progress, completed)
@@ -236,7 +236,7 @@ The tool uses file-based session management. When you login, a `.session_user_id
 
 ## Security Notes
 
-⚠️ **This is a development/learning project and should not be used in production without proper security enhancements:**
+ **This is a development/learning project and should not be used in production without proper security enhancements:**
 
 - Passwords are stored in plain text (should use hashing like bcrypt)
 - No token expiration for sessions
