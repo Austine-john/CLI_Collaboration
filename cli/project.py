@@ -22,7 +22,7 @@ def create(ctx, name):
         click.echo(f"✅ Project '{name}' created successfully!")
         click.echo(f"📁 Project ID: {project.id}")
     else:
-        click.echo("❌ Failed to create project.", err=True)
+        click.echo(" Failed to create project.", err=True)
 
 
 @project_group.command()
@@ -37,8 +37,8 @@ def list(ctx):
         for p in projects:
             click.echo(f"  • [{p.id}] {p.name}")
     else:
-        click.echo("ℹ️  You don't have any projects yet.")
-        click.echo("💡 Create one with: python main.py project create <name>")
+        click.echo("ℹ  You don't have any projects yet.")
+        click.echo(" Create one with: python main.py project create <name>")
 
 
 @project_group.command()
@@ -48,11 +48,11 @@ def all(ctx):
     projects = Project.get_all()
     
     if projects:
-        click.echo(f"📋 All projects ({len(projects)}):")
+        click.echo(f" All projects ({len(projects)}):")
         for p in projects:
             click.echo(f"  • [{p.id}] {p.name} (Owner ID: {p.owner_id})")
     else:
-        click.echo("ℹ️  No projects in the system yet.")
+        click.echo("ℹ  No projects in the system yet.")
 
 
 @project_group.command()

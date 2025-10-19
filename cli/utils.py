@@ -35,7 +35,7 @@ def login_required(f):
                 user = None 
 
         if not user:
-            click.echo("❌ Error: You must be logged in to run this command.", err=True)
+            click.echo("Error: You must be logged in to run this command.", err=True)
             ctx.exit()
             
         # Call the decorated function, injecting the 'user' object

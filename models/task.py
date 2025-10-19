@@ -5,7 +5,7 @@ from db import get_connection
 class Task:
     def __init__(self, id, title, project_id, assigned_to=None, status="pending"):
         self.id = id
-        self.title = title  # Changed from description to title
+        self.title = title  
         self.project_id = project_id
         self.assigned_to = assigned_to
         self.status = status

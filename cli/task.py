@@ -22,7 +22,7 @@ def create(ctx, project_id, title, assign):
     # Check if project exists
     project = Project.get_by_id(project_id)
     if not project:
-        click.echo(f"❌ Project {project_id} not found.", err=True)
+        click.echo(f" Project {project_id} not found.", err=True)
         return
     
     # Create the task
@@ -34,7 +34,7 @@ def create(ctx, project_id, title, assign):
         if assign:
             click.echo(f"👤 Assigned to User ID: {assign}")
     else:
-        click.echo("❌ Failed to create task.", err=True)
+        click.echo(" Failed to create task.", err=True)
 
 
 @task_group.command()
@@ -44,18 +44,18 @@ def list(ctx, project_id):
     """List all tasks in a project."""
     project = Project.get_by_id(project_id)
     if not project:
-        click.echo(f"❌ Project {project_id} not found.", err=True)
+        click.echo(f" Project {project_id} not found.", err=True)
         return
     
     tasks = Task.get_by_project(project_id)
     if tasks:
-        click.echo(f"📋 Tasks in '{project.name}' ({len(tasks)}):")
+        click.echo(f" Tasks in '{project.name}' ({len(tasks)}):")
         for t in tasks:
             status_icon = "✅" if t.status == "completed" else "⏳"
             assigned = f"→ User {t.assigned_to}" if t.assigned_to else "→ Unassigned"
             click.echo(f"  {status_icon} [{t.id}] {t.title} {assigned}")
     else:
-        click.echo(f"ℹ️  No tasks in '{project.name}' yet.")
+        click.echo(f"ℹ  No tasks in '{project.name}' yet.")
 
 
 @task_group.command()
@@ -66,7 +66,7 @@ def mytasks(ctx):
     tasks = Task.get_by_user(user.id)
     
     if tasks:
-        click.echo(f"📋 Your tasks ({len(tasks)}):")
+        click.echo(f" Your tasks ({len(tasks)}):")
         for t in tasks:
             status_icon = "✅" if t.status == "completed" else "⏳"
             project = Project.get_by_id(t.project_id)
@@ -74,7 +74,7 @@ def mytasks(ctx):
             click.echo(f"  {status_icon} [{t.id}] {t.title}")
             click.echo(f"      📁 Project: {project_name} (ID: {t.project_id})")
     else:
-        click.echo("ℹ️  You have no assigned tasks.")
+        click.echo("ℹ  You have no assigned tasks.")
 
 
 @task_group.command()
@@ -84,13 +84,13 @@ def all(ctx):
     tasks = Task.get_all()
     
     if tasks:
-        click.echo(f"📋 All tasks ({len(tasks)}):")
+        click.echo(f" All tasks ({len(tasks)}):")
         for t in tasks:
             status_icon = "✅" if t.status == "completed" else "⏳"
             assigned = f"User {t.assigned_to}" if t.assigned_to else "Unassigned"
             click.echo(f"  {status_icon} [{t.id}] {t.title} (Project: {t.project_id}, {assigned})")
     else:
-        click.echo("ℹ️  No tasks in the system yet.")
+        click.echo(" No tasks in the system yet.")
 
 
 @task_group.command()
@@ -102,19 +102,19 @@ def assign(ctx, task_id, user_id):
     # Check if task exists
     task = Task.get_by_id(task_id)
     if not task:
-        click.echo(f"❌ Task {task_id} not found.", err=True)
+        click.echo(f" Task {task_id} not found.", err=True)
         return
     
     # Check if user exists
     user = User.get_by_id(user_id)
     if not user:
-        click.echo(f"❌ User {user_id} not found.", err=True)
+        click.echo(f" User {user_id} not found.", err=True)
         return
     
     if Task.assign(task_id, user_id):
-        click.echo(f"✅ Task {task_id} assigned to {user.username}!")
+        click.echo(f" Task {task_id} assigned to {user.username}!")
     else:
-        click.echo("❌ Failed to assign task.", err=True)
+        click.echo(" Failed to assign task.", err=True)
 
 
 @task_group.command()
@@ -141,6 +141,6 @@ def status(ctx, task_id, status):
 def delete(ctx, task_id):
     """Delete a task."""
     if Task.delete(task_id):
-        click.echo(f"✅ Task {task_id} deleted successfully!")
+        click.echo(f" Task {task_id} deleted successfully!")
     else:
-        click.echo(f"❌ Task {task_id} not found.", err=True)
+        click.echo(f" Task {task_id} not found.", err=True)

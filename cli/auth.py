@@ -25,7 +25,7 @@ def require_login(f):
     def wrapper(ctx, *args, **kwargs):
         user = get_current_user()
         if not user:
-            click.echo("❌ Error: You must be logged in to run this command.", err=True)
+            click.echo(" Error: You must be logged in to run this command.", err=True)
             ctx.exit(1)
         ctx.obj = ctx.obj or {}
         ctx.obj['user'] = user
@@ -48,7 +48,7 @@ def login(username, password):
     """Log in with your credentials."""
     user = User.login(username, password)
     if not user:
-        click.echo("❌ Invalid username or password.", err=True)
+        click.echo(" Invalid username or password.", err=True)
         return
     
     try:
@@ -65,10 +65,10 @@ def login(username, password):
 def register(username, password):
     """Register a new user account."""
     if User.create(username, password):
-        click.echo(f"✅ User '{username}' registered successfully!")
+        click.echo(f" User '{username}' registered successfully!")
         click.echo("You can now login with: python main.py auth login <username>")
     else:
-        click.echo(f"❌ Username '{username}' already exists.", err=True)
+        click.echo(f" Username '{username}' already exists.", err=True)
 
 
 @auth_group.command()
@@ -80,7 +80,7 @@ def logout():
         name = user.username if user else "User"
         click.echo(f"🚪 {name} logged out.")
     else:
-        click.echo("ℹ️  Not logged in.")
+        click.echo("ℹ  Not logged in.")
 
 
 @auth_group.command()
@@ -90,4 +90,4 @@ def whoami():
     if user:
         click.echo(f"👤 {user.username}")
     else:
-        click.echo("ℹ️  Not logged in.")
+        click.echo("ℹ Not logged in.")
